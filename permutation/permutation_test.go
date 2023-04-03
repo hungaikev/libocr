@@ -2,6 +2,7 @@ package permutation
 
 import (
 	"crypto/rand"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -79,4 +80,49 @@ func TestDifferentPermutationSizes(t *testing.T) {
 
 	assert.Len(t, result1, n1)
 	assert.Len(t, result2, n2)
+}
+
+func factorial(n int) int {
+	if n == 0 {
+		return 1
+	}
+	fact := 1
+	for i := 1; i <= n; i++ {
+		fact *= i
+	}
+	return fact
+}
+
+func TestSecureShuffling(t *testing.T) {
+	n := 5
+	iterations := 10000
+	numPermutations := factorial(n)
+
+	// Initialize a frequency map to count the occurrences of each permutation
+	frequencyMap := make(map[string]int)
+
+	for i := 0; i < iterations; i++ {
+		key := generateRandomKey()
+		result := Permutation(n, key)
+
+		// Convert the result to a string for use as a map key
+		keyString := fmt.Sprint(result)
+		frequencyMap[keyString]++
+	}
+
+	// Perform a Chi-squared test
+	// The expected frequency for each permutation is iterations / n!
+	expectedFrequency := float64(iterations) / float64(numPermutations)
+	var chiSquared float64
+	for _, count := range frequencyMap {
+		observed := float64(count)
+		chiSquared += ((observed - expectedFrequency) * (observed - expectedFrequency)) / expectedFrequency
+	}
+
+	// Degrees of freedom: (n! - 1)
+	// Using a significance level of 0.05 and 119 degrees of freedom,
+	// the critical value for the Chi-squared test is approximately 146.6.
+	// We expect the Chi-squared value to be lower than the critical value.
+	criticalValue := 146.6
+	assert.Less(t, chiSquared, criticalValue)
 }
