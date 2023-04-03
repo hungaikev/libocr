@@ -1,107 +1,82 @@
 package permutation
 
 import (
+	"crypto/rand"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-// TestPermutation checks if the permutation is randomized.
-func TestPermutation(t *testing.T) {
+func generateRandomKey() [16]byte {
+	var key [16]byte
+	_, err := rand.Read(key[:])
+	if err != nil {
+		panic(err)
+	}
+	return key
+}
+
+func TestValidKey(t *testing.T) {
 	n := 10
-	key := [16]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}
-	perm1 := Permutation(n, key)
-	perm2 := Permutation(n, key)
-	for i := 0; i < n; i++ {
-		if perm1[i] != perm2[i] {
-			return
-		}
-	}
-	t.Errorf("expected different permutations, got %v  and %v", perm1, perm2)
+	key := generateRandomKey()
+
+	result := Permutation(n, key)
+
+	assert.Len(t, result, n)
+	assert.ElementsMatch(t, result, []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9})
 }
 
-// TestPermutationLength checks if the length of the permutation is equal to the input length.
-func TestPermutationLength(t *testing.T) {
-	n := 10
-	key := [16]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}
-	perm := Permutation(n, key)
-	if len(perm) != n {
-		t.Errorf("expected permutation length to be %d, got %d", n, len(perm))
-	}
+func TestEmptyPermutation(t *testing.T) {
+	n := 0
+	key := generateRandomKey()
+
+	result := Permutation(n, key)
+
+	assert.Empty(t, result)
 }
 
-// TestPermutationDuplicates checks if the permutation contains no duplicates.
-func TestPermutationDuplicates(t *testing.T) {
-	n := 10
-	key := [16]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}
-	perm := Permutation(n, key)
-	for i := 0; i < n; i++ {
-		for j := i + 1; j < n; j++ {
-			if perm[i] == perm[j] {
-				t.Errorf("duplicate element found in permutation: %v", perm)
-			}
-		}
-	}
+func TestSingleElementPermutation(t *testing.T) {
+	n := 1
+	key := generateRandomKey()
+
+	result := Permutation(n, key)
+
+	assert.Equal(t, []int{0}, result)
 }
 
-// TestPermutationRange checks if the permutation only contains values in the range [0, n-1].
-func TestPermutationRange(t *testing.T) {
-	n := 10
-	key := [16]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}
-	perm := Permutation(n, key)
-	for i := 0; i < n; i++ {
-		if perm[i] < 0 || perm[i] >= n {
-			t.Errorf("out of range element found in permutation: %v", perm)
-		}
-	}
+func TestConsistentPermutation(t *testing.T) {
+	n := 5
+	key := generateRandomKey()
+
+	result1 := Permutation(n, key)
+	result2 := Permutation(n, key)
+
+	require.Len(t, result1, n)
+	assert.Equal(t, result1, result2)
 }
 
-// TestCryptoRandSource checks if the Int63 method of the cryptoRandSource struct returns a random number within the range [0, 9223372036854775807].
-func TestCryptoRandSource(t *testing.T) {
-	key := [16]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}
-	crs := newCryptoRandSource(key)
-	var generatedNums [10]int64
-	for i := 0; i < 10; i++ {
-		num := crs.Int63()
-		if num < 0 || num > 9223372036854775807 {
-			t.Errorf("generated number out of range: %v", num)
-		}
-		generatedNums[i] = num
-	}
-	// Check that the generated numbers are not all the same.
-	if allSame(generatedNums) {
-		t.Errorf("expected different generated numbers, got %v", generatedNums)
-	}
+func TestDifferentKeys(t *testing.T) {
+	n := 5
+	key1 := generateRandomKey()
+	key2 := generateRandomKey()
+
+	result1 := Permutation(n, key1)
+	result2 := Permutation(n, key2)
+
+	require.Len(t, result1, n)
+	require.Len(t, result2, n)
+	assert.NotEqual(t, result1, result2)
 }
 
-// TestCryptoRandSourceConsistency checks if the same cryptoRandSource with the same key and seed returns the same sequence of random numbers.
-func TestCryptoRandSourceConsistency(t *testing.T) {
-	key := [16]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}
-	crs1 := newCryptoRandSource(key)
-	crs2 := newCryptoRandSource(key)
-	var generatedNums1 [10]int64
-	var generatedNums2 [10]int64
-	for i := 0; i < 10; i++ {
-		num1 := crs1.Int63()
-		num2 := crs2.Int63()
-		if num1 != num2 {
-			t.Errorf("expected same generated numbers, got %v and %v", num1, num2)
-		}
-		generatedNums1[i] = num1
-		generatedNums2[i] = num2
-	}
-	// Check that the generated numbers are the same for both generators.
-	for i := 0; i < 10; i++ {
-		if generatedNums1[i] != generatedNums2[i] {
-			t.Errorf("expected same generated numbers, got %v and %v", generatedNums1, generatedNums2)
-		}
-	}
-}
+func TestDifferentPermutationSizes(t *testing.T) {
+	n1 := 5
+	n2 := 7
+	key := generateRandomKey()
 
-// allSame checks if all the elements in a slice are the same.
-func allSame(nums [10]int64) bool {
-	for i := 1; i < len(nums); i++ {
-		if nums[i] != nums[0] {
-			return false
-		}
-	}
-	return true
+	result1 := Permutation(n1, key)
+	result2 := Permutation(n2, key)
+
+	assert.Len(t, result1, n1)
+	assert.Len(t, result2, n2)
 }
