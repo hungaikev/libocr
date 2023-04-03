@@ -162,3 +162,21 @@ sequenceDiagram
     Recovery->>Oracle3: Recover and adjust
 
 ```
+
+### Flow Chart 
+
+```mermaid
+graph TD
+    A[User Request] --> B[Data Transmission]
+    B --> C[Data Aggregation]
+    C --> D[Consensus Algorithm]
+    D --> E[Designated Reporter]
+    E --> F[Submit Data to Blockchain]
+    F --> G[Return Aggregated Data to User]
+    D --> H[Incentive Mechanism]
+    H --> I[Reward/Penalty for Oracles]
+    B --> J[Failure Detection]
+    J --> K[Recovery & Resilience]
+    K --> B
+```
+
