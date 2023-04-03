@@ -1,4 +1,4 @@
-// Serializes and deserializes big ints using two's complement big endian representation
+// Package bigbigendian Serializes and deserializes big ints using two's complement big endian representation
 package bigbigendian
 
 import (
@@ -6,10 +6,10 @@ import (
 	"math/big"
 )
 
-// The maximum size (in bytes) of serialized representation we support
+// MaxSize is the maximum size (in bytes) of serialized representation we support
 const MaxSize = 128
 
-// Serializes a signed big.Int into a byte slice with size bytes. Does not mutate its inputs. Does not panic.
+// SerializeSigned serializes a signed big.Int into a byte slice with size bytes. Does not mutate its inputs. Does not panic.
 func SerializeSigned(size int, i *big.Int) ([]byte, error) {
 	if i == nil {
 		return nil, fmt.Errorf("i is nil")
@@ -24,7 +24,7 @@ func SerializeSigned(size int, i *big.Int) ([]byte, error) {
 
 	b := make([]byte, size)
 	if negative {
-		// To find the two's complement we subtract one from the absolute value, then invert
+		// To find the two's complement, we subtract one from the absolute value, then invert
 
 		// If input is valid, max abs(i) here: 2**(bitSize - 1)
 
@@ -49,7 +49,7 @@ func SerializeSigned(size int, i *big.Int) ([]byte, error) {
 	return b, nil
 }
 
-// Deserializes a byte slice with size bytes into a signed big.Int. Does not mutate its inputs. Does not panic.
+// DeserializeSigned deserializes a byte slice with size bytes into a signed big.Int. Does not mutate its inputs. Does not panic.
 func DeserializeSigned(size int, b []byte) (*big.Int, error) {
 	if !(0 < size && size <= MaxSize) {
 		return nil, fmt.Errorf("size is %v, but must be between 1 and %v", size, MaxSize)
